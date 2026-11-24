@@ -742,7 +742,7 @@ window.SITE = {
           {
             "t": "羽毛球",
             "en": "badminton",
-            "d": "有空就打几场羽毛球。点「挥拍」，试试能打几个来回。",
+            "d": "有空就打几场羽毛球。用鼠标控制球拍去接球，接到了它就会打回去。",
             "c": "#E2E9F6",
             "i": "heart",
             "widget": "badminton"
@@ -1113,7 +1113,7 @@ const WIDGETS = {
   },
   badminton(el) {
     const RK = `<ellipse cx="0" cy="-16" rx="13" ry="19" fill="none" stroke="#1C2342" stroke-width="3"/><path d="M-8 -27l16 22M8 -27l-16 22" stroke="#FFFDF9" stroke-width="1.2" opacity=".5"/><line x1="0" y1="4" x2="0" y2="24" stroke="#1C2342" stroke-width="3.4" stroke-linecap="round"/><rect x="-4.5" y="22" width="9" height="13" rx="3" fill="#E2434F"/>`;
-    el.innerHTML = `<div class="bmt"><svg viewBox="0 0 320 140" id="bmsvg">
+    el.innerHTML = `<div class="bmt"><svg viewBox="0 0 320 140" id="bmsvg" tabindex="0" style="cursor:crosshair">
       <rect x="0" y="0" width="320" height="140" rx="10" fill="#5F8A5C"/>
       <rect x="18" y="14" width="284" height="112" rx="4" fill="#7BA173"/>
       <rect x="18" y="14" width="284" height="112" rx="4" fill="none" stroke="#FFFDF9" stroke-width="3"/>
@@ -1122,41 +1122,74 @@ const WIDGETS = {
       <line x1="160" y1="34" x2="160" y2="106" stroke="#1C2342" stroke-width="4" stroke-linecap="round"/>
       <rect x="156" y="27" width="8" height="8" rx="2" fill="#D6F04F"/>
       <rect x="156" y="101" width="8" height="8" rx="2" fill="#D6F04F"/>
+      <circle id="bmdrop" cx="0" cy="0" r="16" fill="none" stroke="#D6F04F" stroke-width="2" stroke-dasharray="4 4" opacity="0"/>
       <g id="bmr1">${RK}</g><g id="bmr2">${RK}</g>
       <g id="bms"><path d="M-4 -2l-6 -12M0 -3l0 -13M4 -2l6 -12" stroke="#FFFDF9" stroke-width="2.2" stroke-linecap="round"/><circle cx="0" cy="2" r="5" fill="#FFFDF9" stroke="#1C2342" stroke-width="1.2"/></g>
-    </svg><div class="bmrow"><button type="button" class="go" id="bmgo">挥拍 ↗</button><small id="bmcount">连续对打：0 拍</small><small id="bmbest"></small></div></div>`;
-    const r1 = el.querySelector("#bmr1"), r2 = el.querySelector("#bmr2"), sh = el.querySelector("#bms");
-    const cnt = el.querySelector("#bmcount"), best = el.querySelector("#bmbest");
-    let n = 0, hi = 0, busy = false;
-    const L = [58, 88], R = [262, 88];
-    const place = (g, p, a) => g.setAttribute("transform", `translate(${p[0]} ${p[1]}) rotate(${a})`);
-    const put = (x, y) => sh.setAttribute("transform", `translate(${x} ${y})`);
-    place(r1, L, 20); place(r2, R, -20); put(L[0] + 20, L[1] - 30);
-    const swing = (g, p, dir, done) => {
-      const t0 = performance.now(), base = dir > 0 ? 20 : -20;
-      const f = now => { if (!el.isConnected) return; const k = Math.min(1, (now - t0) / 300), a = dir * 46 * Math.sin(Math.PI * k);
-        place(g, [p[0] + a * .13, p[1] - Math.abs(a) * .05], base + a);
-        if (k < 1) requestAnimationFrame(f); else done && done(); };
+    </svg><div class="bmrow"><button type="button" class="go" id="bmgo">发球 ↗</button><small id="bmcount">移动鼠标控制球拍</small><small id="bmbest"></small></div></div>`;
+    const svg = el.querySelector("#bmsvg"), r1 = el.querySelector("#bmr1"), r2 = el.querySelector("#bmr2");
+    const sh = el.querySelector("#bms"), drop = el.querySelector("#bmdrop");
+    const btn = el.querySelector("#bmgo"), cnt = el.querySelector("#bmcount"), best = el.querySelector("#bmbest");
+    const W = 320, H = 140, NET = 160;
+    let n = 0, hi = 0, phase = "ready", fid = 0, flying = false;
+    const rk = { x: 58, y: 90 }, ball = { x: 78, y: 58 };
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const drawBall = () => sh.setAttribute("transform", `translate(${ball.x} ${ball.y})`);
+    const drawR2 = o => r2.setAttribute("transform", `translate(262 88) rotate(${-20 - (o || 0)})`);
+    const drawR1 = o => {
+      const a = clamp(Math.atan2(ball.y - rk.y, ball.x - rk.x) * 180 / Math.PI + 90, -68, 68);
+      r1.setAttribute("transform", `translate(${rk.x} ${rk.y}) rotate(${a + (o || 0)})`);
+    };
+    const showDrop = p => { drop.setAttribute("cx", p[0]); drop.setAttribute("cy", p[1]); drop.setAttribute("opacity", .8); };
+    const hideDrop = () => drop.setAttribute("opacity", 0);
+    drawR1(0); drawR2(0); drawBall();
+    const swingL = () => { const t0 = performance.now();
+      const f = now => { if (!el.isConnected) return; const k = Math.min(1, (now - t0) / 260); drawR1(Math.sin(Math.PI * k) * -32); if (k < 1) requestAnimationFrame(f); };
+      requestAnimationFrame(f); };
+    const swingR = () => { const t0 = performance.now();
+      const f = now => { if (!el.isConnected) return; const k = Math.min(1, (now - t0) / 260); drawR2(Math.sin(Math.PI * k) * -32); if (k < 1) requestAnimationFrame(f); };
+      requestAnimationFrame(f); };
+    const fly = (a, b, lift, dur, done) => {
+      const id = ++fid, t0 = performance.now(); flying = true;
+      const f = now => { if (!el.isConnected || id !== fid) return; const k = Math.min(1, (now - t0) / dur);
+        ball.x = a[0] + (b[0] - a[0]) * k; ball.y = a[1] + (b[1] - a[1]) * k - Math.sin(Math.PI * k) * lift;
+        drawBall(); drawR1(0);
+        if (k < 1) requestAnimationFrame(f); else { flying = false; done && done(); } };
       requestAnimationFrame(f);
     };
-    const fly = (a, b, lift, done) => {
-      const t0 = performance.now();
-      const f = now => { if (!el.isConnected) return; const k = Math.min(1, (now - t0) / 900);
-        put(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k - Math.sin(Math.PI * k) * lift);
-        if (k < 1) requestAnimationFrame(f); else done && done(); };
-      requestAnimationFrame(f);
+    const stopFly = () => { fid++; flying = false; };
+    const autoBack = () => { swingR();
+      setTimeout(() => { if (!el.isConnected) return;
+        const to = [rand(46, 126), rand(48, 114)]; showDrop(to);
+        fly([244, 66], to, 42, 820, () => endRally());
+      }, 320); };
+    const endRally = () => { hideDrop(); if (n > hi) hi = n; best.textContent = hi ? `最佳：${hi} 拍` : "";
+      cnt.textContent = n ? `这次打了 ${n} 拍` : "再来一次？"; btn.textContent = "重新发球 ↗"; n = 0; phase = "ready"; };
+    const serve = () => { phase = "rally"; n = 0; cnt.textContent = "挥拍接球：0 拍"; btn.textContent = "挥拍 ↑"; hideDrop(); swingL();
+      const to = [rand(222, 274), rand(48, 98)];
+      fly([rk.x + 10, rk.y - 26], to, 44, 680, () => autoBack()); };
+    const aim = (x, y) => { rk.x = clamp(x, 36, 148); rk.y = clamp(y, 46, 118); drawR1(0); };
+    const hitBall = () => {
+      if (phase !== "rally") { serve(); return; }
+      swingL();
+      if (!flying || ball.x > NET + 10) return;
+      if (Math.hypot(ball.x - rk.x, ball.y - rk.y) > 58) return;
+      stopFly(); hideDrop(); n++; cnt.textContent = `挥拍接球：${n} 拍`;
+      const to = [rand(206, 276), clamp(40 + (rk.y - 46) / 72 * 62, 38, 106)];
+      fly([ball.x, ball.y], to, 36, 600, () => autoBack());
     };
-    el.querySelector("#bmgo").onclick = () => {
-      if (busy) return; busy = true;
-      const hit = [L[0] + 24, L[1] - 36], far = [R[0] - 28, R[1] - 19];
-      swing(r1, L, 1, () => fly(hit, far, 54, () => {
-        swing(r2, R, -1, () => fly([far[0], far[1] + 3], [hit[0], hit[1]], 44, () => {
-          n++; cnt.textContent = `连续对打：${n} 拍`;
-          if (n > hi) { hi = n; best.textContent = `最佳：${hi} 拍`; }
-          place(r1, L, 20); place(r2, R, -20); put(L[0] + 20, L[1] - 30); busy = false;
-        }));
-      }));
-    };
+    btn.onclick = () => { if (phase === "ready") serve(); else hitBall(); };
+    const toSvg = e => { const r = svg.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+    svg.addEventListener("pointermove", e => { const p = toSvg(e); aim(p[0], p[1]); });
+    svg.addEventListener("pointerdown", e => { const p = toSvg(e); if (p[0] < NET) { aim(p[0], p[1]); hitBall(); } });
+    svg.addEventListener("keydown", e => { const s = 14;
+      if (e.key === "ArrowLeft") aim(rk.x - s, rk.y);
+      else if (e.key === "ArrowRight") aim(rk.x + s, rk.y);
+      else if (e.key === "ArrowUp") aim(rk.x, rk.y - s);
+      else if (e.key === "ArrowDown") aim(rk.x, rk.y + s);
+      else if (e.key === " " || e.key === "Enter") { e.preventDefault(); hitBall(); return; }
+      else return;
+      e.preventDefault(); });
   }
 };
 function gachaArt(si, oi, ai) {
