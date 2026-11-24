@@ -340,9 +340,9 @@ body.flat #gl,body.flat #labels{display:none}
 .stamps span{font-family:var(--f-hand-cn);font-size:15px;padding:6px 10px;border:2px dashed currentColor;border-radius:6px;rotate:var(--r);color:var(--sc)}
 .hike svg{width:100%;height:130px;display:block}
 .hike .walker{transition:offset-distance 3s ease-in-out}
-.bmt svg{width:100%;height:200px;display:block;border-radius:12px;overflow:hidden}
-.bmrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px}
-.bmrow small{opacity:.62}
+.bmt svg{width:100%;height:132px;display:block;border-radius:10px;overflow:hidden}
+.bmrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.bmrow small{opacity:.62;font-size:12.5px}
 
 /* travel */
 .tvmap{position:relative;border-radius:16px;overflow:hidden;background:#1C2342;aspect-ratio:16/10}
@@ -742,10 +742,9 @@ window.SITE = {
           {
             "t": "羽毛球",
             "en": "badminton",
-            "d": "有空就打几场羽毛球。点一下「挥拍」，看看能和对面的球拍打几个来回。",
+            "d": "有空就打几场羽毛球。点「挥拍」，试试能打几个来回。",
             "c": "#E2E9F6",
             "i": "heart",
-            "wide": true,
             "widget": "badminton"
           },
           {
@@ -1114,22 +1113,22 @@ const WIDGETS = {
   },
   badminton(el) {
     const RK = `<ellipse cx="0" cy="-16" rx="13" ry="19" fill="none" stroke="#1C2342" stroke-width="3"/><path d="M-8 -27l16 22M8 -27l-16 22" stroke="#FFFDF9" stroke-width="1.2" opacity=".5"/><line x1="0" y1="4" x2="0" y2="24" stroke="#1C2342" stroke-width="3.4" stroke-linecap="round"/><rect x="-4.5" y="22" width="9" height="13" rx="3" fill="#E2434F"/>`;
-    el.innerHTML = `<div class="bmt"><svg viewBox="0 0 320 176" id="bmsvg">
-      <rect x="0" y="0" width="320" height="176" rx="12" fill="#5F8A5C"/>
-      <rect x="18" y="16" width="284" height="144" rx="4" fill="#7BA173"/>
-      <rect x="18" y="16" width="284" height="144" rx="4" fill="none" stroke="#FFFDF9" stroke-width="3"/>
-      <line x1="160" y1="16" x2="160" y2="160" stroke="#FFFDF9" stroke-width="2" stroke-dasharray="8 8" opacity=".85"/>
-      <line x1="18" y1="88" x2="302" y2="88" stroke="#FFFDF9" stroke-width="1.5" opacity=".4"/>
-      <line x1="160" y1="38" x2="160" y2="138" stroke="#1C2342" stroke-width="4" stroke-linecap="round"/>
-      <rect x="156" y="31" width="8" height="8" rx="2" fill="#D6F04F"/>
-      <rect x="156" y="137" width="8" height="8" rx="2" fill="#D6F04F"/>
+    el.innerHTML = `<div class="bmt"><svg viewBox="0 0 320 140" id="bmsvg">
+      <rect x="0" y="0" width="320" height="140" rx="10" fill="#5F8A5C"/>
+      <rect x="18" y="14" width="284" height="112" rx="4" fill="#7BA173"/>
+      <rect x="18" y="14" width="284" height="112" rx="4" fill="none" stroke="#FFFDF9" stroke-width="3"/>
+      <line x1="160" y1="14" x2="160" y2="126" stroke="#FFFDF9" stroke-width="2" stroke-dasharray="8 8" opacity=".85"/>
+      <line x1="18" y1="70" x2="302" y2="70" stroke="#FFFDF9" stroke-width="1.5" opacity=".4"/>
+      <line x1="160" y1="34" x2="160" y2="106" stroke="#1C2342" stroke-width="4" stroke-linecap="round"/>
+      <rect x="156" y="27" width="8" height="8" rx="2" fill="#D6F04F"/>
+      <rect x="156" y="101" width="8" height="8" rx="2" fill="#D6F04F"/>
       <g id="bmr1">${RK}</g><g id="bmr2">${RK}</g>
       <g id="bms"><path d="M-4 -2l-6 -12M0 -3l0 -13M4 -2l6 -12" stroke="#FFFDF9" stroke-width="2.2" stroke-linecap="round"/><circle cx="0" cy="2" r="5" fill="#FFFDF9" stroke="#1C2342" stroke-width="1.2"/></g>
     </svg><div class="bmrow"><button type="button" class="go" id="bmgo">挥拍 ↗</button><small id="bmcount">连续对打：0 拍</small><small id="bmbest"></small></div></div>`;
     const r1 = el.querySelector("#bmr1"), r2 = el.querySelector("#bmr2"), sh = el.querySelector("#bms");
     const cnt = el.querySelector("#bmcount"), best = el.querySelector("#bmbest");
     let n = 0, hi = 0, busy = false;
-    const L = [58, 112], R = [262, 112];
+    const L = [58, 88], R = [262, 88];
     const place = (g, p, a) => g.setAttribute("transform", `translate(${p[0]} ${p[1]}) rotate(${a})`);
     const put = (x, y) => sh.setAttribute("transform", `translate(${x} ${y})`);
     place(r1, L, 20); place(r2, R, -20); put(L[0] + 20, L[1] - 30);
